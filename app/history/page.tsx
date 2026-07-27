@@ -1,110 +1,187 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/utils/supabaseClient';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react'
+import {
+  ArrowLeft,
+  Check,
+  Clipboard,
+  Clock3,
+  FileText,
+  Sparkles,
+  Trash2,
+} from 'lucide-react'
+import { useRouter } from 'next/navigation'
+
+import { supabase } from '@/utils/supabaseClient'
+import '../styles/styles.css'
 
 type Summary = {
-  id: string;
-  original_text: string;
-  summary: string;
-  created_at: string;
-};
+  id: string
+  original_text: string
+  summary: string
+  created_at: string
+}
 
 export default function HistoryPage() {
-  const [summaries, setSummaries] = useState<Summary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [summaries, setSummaries] = useState<Summary[]>([])
+  const [loading, setLoading] = useState(true)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState('')
+  const router = useRouter()
 
   useEffect(() => {
     const fetchSummaries = async () => {
       const {
         data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError) {
-        console.error('Error getting user:', userError.message);
-        setLoading(false);
-        return;
-      }
+      } = await supabase.auth.getUser()
 
       if (!user) {
-        console.warn('No user found. Are you logged in?');
-        setLoading(false);
-        return;
+        router.replace('/')
+        return
       }
 
       const { data, error } = await supabase
         .from('summaries')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .select('id, original_text, summary, created_at')
+        .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Error fetching summaries:', error);
-        alert('Failed to fetch summaries. Please try again later.');
+        setErrorMessage('ไม่สามารถโหลดประวัติได้')
       } else {
-        const filteredData = (data || []).filter(
-          (item) => item.summary && item.summary.trim() !== ''
-        );
-        setSummaries(filteredData);
+        setSummaries(data ?? [])
       }
 
-      setLoading(false);
-    };
+      setLoading(false)
+    }
 
-    fetchSummaries();
-  }, []);
+    fetchSummaries()
+  }, [router])
+
+  const copySummary = async (item: Summary) => {
+    await navigator.clipboard.writeText(item.summary)
+    setCopiedId(item.id)
+    window.setTimeout(() => setCopiedId(null), 1500)
+  }
+
+  const deleteSummary = async (id: string) => {
+    const confirmed = window.confirm('ต้องการลบประวัติรายการนี้หรือไม่?')
+    if (!confirmed) return
+
+    const { error } = await supabase.from('summaries').delete().eq('id', id)
+
+    if (error) {
+      setErrorMessage('ไม่สามารถลบรายการได้')
+      return
+    }
+
+    setSummaries((current) => current.filter((item) => item.id !== id))
+  }
 
   return (
-    <div className="min-h-screen bg-[#fff0f5] p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-[#ff69b4]">📝 ประวัติการสรุปข้อความ</h1>
+    <div className="history-shell">
+      <header className="history-topbar">
         <button
+          className="brand"
+          type="button"
           onClick={() => router.push('/')}
-          className="
-            inline-block
-            px-6 py-2.5
-            bg-[#ff69b4] hover:bg-[#ff4da6]
-            text-white
-            rounded-full
-            text-base
-            font-medium
-            cursor-pointer
-            transition-colors duration-200
-          "
         >
-          ⬅ Go Back
+          <span className="brand-icon">
+            <Sparkles size={19} />
+          </span>
+          <span>InShort</span>
         </button>
-      </div>
 
-      {loading ? (
-        <p className="text-[#ff69b4]">Loading...</p>
-      ) : summaries.length === 0 ? (
-        <p className="text-gray-600">ยังไม่มีประวัติการสรุปข้อความ</p>
-      ) : (
-        <div className="grid gap-4">
-          {summaries.map((summary) => (
-            <div
-              key={summary.id}
-              className="bg-white rounded-2xl shadow-md p-5 border-l-4 border-[#ff69b4]"
-            >
-              <p className="mb-2 text-gray-800">
-                <span className="font-semibold text-[#ff69b4]">Original:</span>{' '}
-                {summary.original_text}
-              </p>
-              <p className="mb-2 text-gray-800">
-                <span className="font-semibold text-[#ff69b4]">Summary:</span>{' '}
-                {summary.summary}
-              </p>
-              <p className="text-sm text-gray-400">
-                📅 {new Date(summary.created_at).toLocaleString()}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
+        <button
+          className="nav-button"
+          type="button"
+          onClick={() => router.push('/')}
+        >
+          <ArrowLeft size={17} />
+          กลับหน้าหลัก
+        </button>
+      </header>
+
+      <main className="history-main">
+        <section className="history-heading">
+          <span className="history-heading-icon">
+            <Clock3 size={22} />
+          </span>
+          <div>
+            <span className="card-kicker">Your summaries</span>
+            <h1>ประวัติการสรุปข้อความ</h1>
+            <p>รายการที่สรุปขณะเข้าสู่ระบบจะถูกบันทึกไว้ที่นี่</p>
+          </div>
+        </section>
+
+        {errorMessage && (
+          <p className="error-message" role="alert">
+            {errorMessage}
+          </p>
+        )}
+
+        {loading ? (
+          <div className="history-empty">
+            <span className="spinner spinner-purple" />
+            <p>กำลังโหลดประวัติ...</p>
+          </div>
+        ) : summaries.length === 0 ? (
+          <div className="history-empty">
+            <span className="result-placeholder">
+              <FileText size={28} />
+            </span>
+            <h2>ยังไม่มีประวัติ</h2>
+            <p>กลับไปสรุปข้อความรายการแรกของคุณได้เลย</p>
+          </div>
+        ) : (
+          <div className="history-list">
+            {summaries.map((item) => (
+              <article className="history-card" key={item.id}>
+                <div className="history-card-top">
+                  <time>
+                    {new Date(item.created_at).toLocaleString('th-TH')}
+                  </time>
+
+                  <div className="history-card-actions">
+                    <button
+                      className="icon-button"
+                      type="button"
+                      onClick={() => copySummary(item)}
+                      title="คัดลอกผลสรุป"
+                    >
+                      {copiedId === item.id ? (
+                        <Check size={18} />
+                      ) : (
+                        <Clipboard size={18} />
+                      )}
+                    </button>
+
+                    <button
+                      className="icon-button icon-button-danger"
+                      type="button"
+                      onClick={() => deleteSummary(item.id)}
+                      title="ลบรายการ"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="history-columns">
+                  <section>
+                    <span className="history-label">ข้อความต้นฉบับ</span>
+                    <p>{item.original_text}</p>
+                  </section>
+
+                  <section className="history-summary">
+                    <span className="history-label">ผลสรุป</span>
+                    <p>{item.summary}</p>
+                  </section>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </main>
     </div>
-  );
+  )
 }

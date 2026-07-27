@@ -1,34 +1,114 @@
-import { NextRequest, NextResponse } from "next/server";
-import { Groq } from 'groq-sdk';
+import { Groq } from 'groq-sdk'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
-  const { inputText }: { inputText: string } = await req.json();
+import { createClient } from '@/utils/supabase/server'
 
-  const groq = new Groq({ apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY });
+const GUEST_CHAR_LIMIT = 1000
+const MEMBER_CHAR_LIMIT = 12000
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const chatCompletion = await groq.chat.completions.create({
-      "messages": [
+    const body: unknown = await request.json()
+
+    if (
+      typeof body !== 'object' ||
+      body === null ||
+      !('inputText' in body) ||
+      typeof body.inputText !== 'string'
+    ) {
+      return NextResponse.json(
+        { error: 'รูปแบบข้อมูลไม่ถูกต้อง' },
+        { status: 400 },
+      )
+    }
+
+    const inputText = body.inputText.trim()
+
+    if (!inputText) {
+      return NextResponse.json(
+        { error: 'กรุณาใส่ข้อความที่ต้องการสรุป' },
+        { status: 400 },
+      )
+    }
+
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    const charLimit = user ? MEMBER_CHAR_LIMIT : GUEST_CHAR_LIMIT
+
+    if (inputText.length > charLimit) {
+      return NextResponse.json(
         {
-          "role": "system",
-          "content": "You are a highly skilled AI assistant specializing in summarizing text. Your goal is to produce clear, concise, and accurate summaries that retain the essential meaning, tone, and context of the original content. When summarizing, follow these principles:\n\nIdentify and include the main ideas and key points.\n\nAvoid repetition and omit irrelevant or minor details.\n\nUse neutral, objective language, unless instructed otherwise.\n\nMaintain the original intent and tone of the text.\n\nAdapt the length and format of the summary based on the user's instructions (e.g., bullet points, paragraph form, word/character limit).\n\nIf the text contains technical, legal, or scientific language, simplify only when asked—otherwise, preserve accuracy over simplicity.\n\nAlways ensure the summary is coherent, grammatically correct, and easy to understand.\n\nWait for the user to provide the text to be summarized or specify any particular style or length requirements."
+          error: user
+            ? `ข้อความยาวเกิน ${MEMBER_CHAR_LIMIT.toLocaleString()} ตัวอักษร`
+            : `ผู้ใช้ทั่วไปใส่ข้อความได้ไม่เกิน ${GUEST_CHAR_LIMIT.toLocaleString()} ตัวอักษร`,
+        },
+        { status: 400 },
+      )
+    }
+
+    const apiKey = process.env.GROQ_API_KEY
+
+    if (!apiKey) {
+      console.error('Missing GROQ_API_KEY')
+      return NextResponse.json(
+        { error: 'เซิร์ฟเวอร์ยังไม่ได้ตั้งค่า Groq API Key' },
+        { status: 500 },
+      )
+    }
+
+    const groq = new Groq({ apiKey })
+    const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile'
+
+    const chatCompletion = await groq.chat.completions.create({
+      model,
+      temperature: 0.25,
+      max_completion_tokens: 1200,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are an accurate summarization assistant. Summarize the provided text in the same language as the source. Keep important facts and context, remove repetition, and make the result clear and concise. Use bullet points only when they improve readability. Never invent information that is not present in the source.',
         },
         {
-          "role": "user",
-          "content": `summarize the following text:\n\n${inputText}`
-        }
+          role: 'user',
+          content: `Summarize the following text:\n\n${inputText}`,
+        },
       ],
-      "model": "meta-llama/llama-4-scout-17b-16e-instruct",
-      "temperature": 1,
-      "max_completion_tokens": 1024,
-      "top_p": 1,
-      "stream": false,
-      "stop": null
-    });
+    })
 
-    const summary: string = chatCompletion.choices[0]?.message?.content || "No Summary generated";
-    return NextResponse.json({ summary });
+    const summary = chatCompletion.choices[0]?.message?.content?.trim()
+
+    if (!summary) {
+      return NextResponse.json(
+        { error: 'AI ไม่ได้ส่งผลสรุปกลับมา กรุณาลองใหม่อีกครั้ง' },
+        { status: 502 },
+      )
+    }
+
+    if (user) {
+      const { error: saveError } = await supabase.from('summaries').insert({
+        user_id: user.id,
+        original_text: inputText,
+        summary,
+      })
+
+      if (saveError) {
+        console.error('Failed to save summary:', saveError.message)
+      }
+    }
+
+    return NextResponse.json({ summary })
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'An error occurred while summarizing the text.' }, { status: 500 });
+    console.error('Groq summarization error:', error)
+
+    const message =
+      error instanceof Error && error.message.includes('model')
+        ? 'โมเดล AI ที่ตั้งค่าไว้ไม่พร้อมใช้งาน กรุณาตรวจสอบ GROQ_MODEL'
+        : 'เกิดข้อผิดพลาดระหว่างสรุปข้อความ กรุณาลองใหม่อีกครั้ง'
+
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
