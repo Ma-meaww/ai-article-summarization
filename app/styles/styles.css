@@ -30,7 +30,7 @@ body {
     radial-gradient(circle at 8% 7%, rgba(223, 101, 166, 0.12), transparent 27rem),
     radial-gradient(circle at 92% 16%, rgba(118, 87, 214, 0.16), transparent 30rem),
     var(--page);
-  font-family: var(--font-geist-sans), 'Segoe UI', Tahoma, sans-serif;
+  font-family: var(--font-thai), var(--font-geist-sans), sans-serif;
 }
 
 button,
