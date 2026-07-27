@@ -1,35 +1,42 @@
-"use server";
+'use server'
 
-import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
+import { redirect } from 'next/navigation'
+import { createClient } from '@/utils/supabase/server'
 
 export async function signout() {
-  const supabase = createClient();
-  const { error } = await supabase.auth.signOut();
+  const supabase = await createClient()
+
+  const { error } = await supabase.auth.signOut()
+
   if (error) {
-    console.log(error);
-    redirect("/error");
+    console.error(error)
+    redirect('/error')
   }
 
-  redirect("/logout");
+  redirect('/')
 }
 
 export async function signInWithGoogle() {
-  const supabase = createClient();
+  const supabase = await createClient()
+
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
+    provider: 'google',
     options: {
       queryParams: {
-        access_type: "offline",
-        prompt: "consent",
+        access_type: 'offline',
+        prompt: 'consent',
       },
     },
-  });
+  })
 
   if (error) {
-    console.log(error);
-    redirect("/error");
+    console.error(error)
+    redirect('/error')
   }
 
-  redirect(data.url);
+  if (data.url) {
+    redirect(data.url)
+  }
+
+  redirect('/error')
 }
