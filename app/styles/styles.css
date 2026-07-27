@@ -1,0 +1,221 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #fff0f5;
+  color: #333;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 2rem;
+  background: #ff69b4;
+  color: white;
+  position: relative;
+  border-bottom: 4px solid #ffe4f9;
+}
+
+.header-left,
+.header-right {
+  flex: 0 0 auto;
+  min-width: 100px;
+}
+
+.header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  font-weight: 500;
+}
+
+.logo {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.logo:hover {
+  opacity: 0.85;
+  transform: scale(1.02);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.nav-title {
+  font-size: 1.2rem;
+  font-weight: 400;
+  opacity: 0.95;
+}
+
+.header-right .button {
+  background-color: white;
+  color: #ff69b4;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.header-right .button:hover {
+  background-color: #ffe4f9;
+}
+
+.container {
+  max-width: 70%;
+  margin: 4rem auto;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 8px 32px rgba(255, 105, 180, 0.08);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  color: #ff69b4;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  resize: vertical;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: #fffdfd;
+  font-family: inherit;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: #ff69b4;
+  box-shadow: 0 0 0 4px rgba(255, 105, 180, 0.15);
+}
+
+.char-count {
+  text-align: right;
+  font-size: 0.85rem;
+  color: #777;
+  margin-top: 0.5rem;
+}
+
+.button {
+  display: inline-block;
+  padding: 0.6rem 1.5rem;
+  background-color: #ff69b4;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.button:hover {
+  background-color: #ff4da6;
+  transform: scale(1.05);
+}
+
+.summary {
+  margin-top: 2rem;
+  background: linear-gradient(135deg, #fff0f5 0%, #ffe4f9 100%);
+  padding: 1.5rem 1.75rem;
+  border-radius: 16px;
+  border-left: 6px solid #ff69b4;
+  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.15);
+}
+
+.summary h2 {
+  margin-top: 0;
+  color: #ff1493;
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.welcome-text {
+  margin-right: 1rem;
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.button-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.button-left,
+.button-right {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.history-button {
+  background-color: #ff66b2;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.history-button:hover {
+  background-color: #ff4d99;
+}
+
+.flower-background {
+  background-image: 
+    url('/assets/flower-bush-pink.png'),
+    url('/assets/flower-bush-pink.png');
+  background-repeat: repeat-x, repeat-x;
+  background-position: left 50px, right 50px;
+  background-size: auto 150px, auto 150px;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 200px;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.button, .history-button {
+  border-radius: 20px;
+  box-shadow: 0 4px 10px rgba(255, 105, 180, 0.2);
+  transition: all 0.2s ease-in-out;
+}
+
+.button:hover, .history-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 105, 180, 0.25);
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 4px solid #ffe4f9;
+  border-top: 4px solid #ff69b4;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: auto;
+}
